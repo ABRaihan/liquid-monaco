@@ -7,7 +7,6 @@ function App() {
   const handleBeforeMount = (monaco: Monaco) => {
     new LiquidTheme(monaco).register();
     new LiquidLanguage(monaco).register();
-   
   };
 
   return (

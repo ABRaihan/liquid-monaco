@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor";
-import { liquidFilters } from "./liquid.filter";
+import { liquidFilters } from "./filter";
 import { liquidTags } from "./liquid.tag";
 import { liquidObjects, type LiquidValueType } from "./object";
 

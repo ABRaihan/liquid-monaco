@@ -20,6 +20,7 @@ export class LiquidTheme {
         { token: "tag.liquid", foreground: "#740009" },
         { token: "tag.delimiter.liquid", foreground: "#A41CD1" },
         { token: "number.liquid", foreground: "#1F8058" },
+        { token: "string.liquid", foreground: "#740009" },
         { token: "comment.liquid", foreground: "#107418" },
         { token: "operator.liquid", foreground: "#FD3E49" },
         { token: "variable.liquid", foreground: "#001872" },

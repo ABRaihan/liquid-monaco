@@ -27,9 +27,13 @@ export const liquidTokenizer: monaco.languages.IMonarchLanguage = {
     ],
     tagState: [
       [/%\}/, { token: "delimiter.liquid", next: "@pop" }],
-      [/\b(if|endif|for|in|endfor|unless|endunless|case|endcase|when)\b/, "tag.delimiter.liquid"],
-      [/\bassign\b/, "tag.liquid"],
+      [
+        /\b(case|endcase|when|else|if|endif|unless|endunless|break|continue|cycle|for|in|endfor|liquid|capture|endcapture)\b/,
+        "tag.delimiter.liquid",
+      ],
+      [/\b(assign|echo|layout|raw|endraw)\b/, "tag.liquid"],
       [/\b\d+\b/, "number.liquid"],
+      [/"/, "string.liquid"],
       [/[><]=?|==|!=/, "operator.liquid"],
       [/=/, "operator.assign.liquid"],
       [/[a-zA-Z_]\w*/, "variable.liquid"],

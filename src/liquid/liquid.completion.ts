@@ -1,7 +1,7 @@
 import * as monaco from "monaco-editor";
 import { liquidFilters } from "./filter";
-import { liquidTags } from "./liquid.tag";
 import { liquidObjects, type LiquidValueType } from "./object";
+import { liquidTags } from "./tag";
 
 type LiquidDelimiterType = "output" | "tag";
 
@@ -146,7 +146,7 @@ export class LiquidCompletion {
           type: "tag",
         };
       }
-      return { delimiterType, type: "unknown" };
+      return this.resolveOutputValueContext(delimiterType, expression);
     }
     if (delimiterType === "output") {
       return this.resolveOutputValueContext(delimiterType, expression);

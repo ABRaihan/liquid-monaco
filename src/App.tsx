@@ -14,7 +14,7 @@ function App() {
       height="100dvh"
       language={LIQUID_LANGUAGE_ID}
       theme={LIQUID_THEME_ID}
-      defaultValue="{{product}}"
+      defaultValue="{%  %}"
       options={{
         automaticLayout: true,
       }}

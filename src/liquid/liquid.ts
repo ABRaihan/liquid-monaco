@@ -1,6 +1,6 @@
 import * as monaco from "monaco-editor";
+import { LiquidCompletion } from "./completion";
 import { LIQUID_LANGUAGE_ID } from "./constants";
-import { LiquidCompletion } from "./liquid.completion";
 import { liquidConfiguration } from "./liquid.config";
 import { liquidTokenizer } from "./liquid.monarch";
 type Monaco = typeof monaco;

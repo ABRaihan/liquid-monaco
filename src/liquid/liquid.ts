@@ -3,6 +3,7 @@ import { registerLiquidAutoClosingDelimiters } from "./liquid.auto-closing-delim
 import { LiquidCompletion } from "./completion";
 import { LIQUID_LANGUAGE_ID } from "./constants";
 import { liquidConfiguration } from "./liquid.config";
+import { registerLiquidFormatter } from "./formatter/liquid-formatter.provider";
 import { liquidTokenizer } from "./liquid.monarch";
 type Monaco = typeof monaco;
 
@@ -27,6 +28,7 @@ export class LiquidLanguage {
       new LiquidCompletion(this.monaco).completion,
     );
     this.monaco.languages.setLanguageConfiguration(LIQUID_LANGUAGE_ID, liquidConfiguration);
+    registerLiquidFormatter(this.monaco);
     registerLiquidAutoClosingDelimiters(this.monaco);
   }
 }

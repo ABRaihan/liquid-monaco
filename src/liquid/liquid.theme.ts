@@ -9,21 +9,21 @@ export class LiquidTheme {
   }
   register() {
     this.monaco.editor.defineTheme(LIQUID_THEME_ID, {
-      base: "vs",
+      base: "vs-dark",
       inherit: true,
       colors: {},
       rules: [
-        { token: "delimiter.liquid", foreground: "#0037F3" },
-        { token: "object.liquid", foreground: "#0037F3" },
-        { token: "property.liquid", foreground: "#001872" },
-        { token: "filter.liquid", foreground: "#70552A" },
-        { token: "tag.liquid", foreground: "#740009" },
-        { token: "tag.delimiter.liquid", foreground: "#A41CD1" },
-        { token: "number.liquid", foreground: "#1F8058" },
-        { token: "string.liquid", foreground: "#740009" },
-        { token: "comment.liquid", foreground: "#107418" },
-        { token: "operator.liquid", foreground: "#FD3E49" },
-        { token: "variable.liquid", foreground: "#001872" },
+        { token: "delimiter.liquid", foreground: "#FBCC2F" },
+        { token: "object.liquid", foreground: "#4C90C9" },
+        { token: "property.liquid", foreground: "#CECECE" },
+        { token: "filter.liquid", foreground: "#CECECE" },
+        { token: "tag.liquid", foreground: "#4C90C9" },
+        { token: "tag.delimiter.liquid", foreground: "#4D93CD" },
+        { token: "number.liquid", foreground: "#ADC7A0" },
+        { token: "string.liquid", foreground: "#C7856F" },
+        { token: "comment.liquid", foreground: "#608D4F" },
+        { token: "operator.liquid", foreground: "#B2121B" },
+        { token: "variable.liquid", foreground: "#4C90C9" },
       ],
     });
   }

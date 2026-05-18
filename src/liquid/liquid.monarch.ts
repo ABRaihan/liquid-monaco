@@ -7,9 +7,10 @@ export const liquidTokenizer: monaco.languages.IMonarchLanguage = {
       [/\{%\s*stylesheet\s*%\}/, { token: "tag.liquid", next: "@stylesheetState", nextEmbedded: "css" }],
       [/\{\{/, { token: "delimiter.liquid", next: "@outputState" }],
       [/\{%/, { token: "delimiter.liquid", next: "@tagState" }],
+      [/<!doctype\s+/i, { token: "tag.html", next: "@doctypeState" }],
       [/<script\b[^>]*>/, { token: "tag.html", next: "@scriptState", nextEmbedded: "text/javascript" }],
-      [/<([a-zA-Z0-9]+)\b[^>]*>/, { token: "tag.html", next: "@htmlState", nextEmbedded: "text/html" }],
-      [/[^<{}%]+/, ""],
+      [/./, { token: "", next: "@htmlState", nextEmbedded: "text/html" }],
+      // [/[^<{}%]+/, ""],
     ],
     commentState: [
       [/\{%\s*comment\s*%\}/, { token: "comment.liquid", next: "@push" }],
@@ -17,9 +18,18 @@ export const liquidTokenizer: monaco.languages.IMonarchLanguage = {
       [/[^{%]+/, "comment.liquid"], // skip single text and capture block text for performance
       [/./, "comment.liquid"],
     ],
+    doctypeState: [
+      [/\bhtml\b/i, { token: "attribute.name.html" }],
+      [/>/, { token: "tag.html", next: "@htmlState", nextEmbedded: "text/html" }],
+      [/[^>]+/, ""], // Handle extra attributes or whitespace inside the doctype zone safely
+    ],
     htmlState: [
-      [/<\/([a-zA-Z0-9]+)\s*>/, { token: "tag.html", next: "@pop", nextEmbedded: "@pop" }],
-      [/./, ""], // Embedded HTML Engine handles everything inside the tags
+      [/<!doctype\s+html[^>]*>/i, { token: "tag.html" }],
+      [/\{%\s*comment\s*%\}/, { token: "comment.liquid", next: "@commentState", nextEmbedded: "@pop" }],
+      [/\{\{/, { token: "delimiter.liquid", next: "@outputState", nextEmbedded: "@pop" }],
+      [/\{%/, { token: "delimiter.liquid", next: "@tagState", nextEmbedded: "@pop" }],
+      // Otherwise, let the HTML engine handle everything (attributes, tags, doctype)
+      [/./, ""],
     ],
     scriptState: [
       [/<\/script\s*>/, { token: "tag.html", next: "@pop", nextEmbedded: "@pop" }],

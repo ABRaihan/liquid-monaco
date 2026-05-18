@@ -16,8 +16,7 @@ export function formatEmbeddedRegions(source: string, options: LiquidFormatterOp
 
     const body = lines.slice(region.startLineIndex + 1, region.endLineIndex).join("\n");
     const baseIndentLevel = getIndentLevel(lines[region.startLineIndex] ?? "", options);
-    const formattedBody =
-      region.language === "css" ? formatCss(body, options) : formatJavaScript(body, options);
+    const formattedBody = region.language === "css" ? formatCss(body, options) : formatJavaScript(body, options);
     const indentedBody = indentFormattedBody(formattedBody, baseIndentLevel + 1, options);
 
     lines.splice(region.startLineIndex + 1, region.endLineIndex - region.startLineIndex - 1, ...indentedBody);
@@ -36,8 +35,7 @@ function collectEmbeddedRegions(lines: string[]): EmbeddedRegion[] {
 
     if (current) {
       if (
-        (current.language === "css" &&
-          (isLiquidStylesheetClose(trimmed) || isHtmlCloseTag(trimmed, "style"))) ||
+        (current.language === "css" && (isLiquidStylesheetClose(trimmed) || isHtmlCloseTag(trimmed, "style"))) ||
         (current.language === "javascript" && isHtmlCloseTag(trimmed, "script"))
       ) {
         regions.push({ ...current, endLineIndex: index });

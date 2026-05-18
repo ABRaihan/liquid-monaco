@@ -23,7 +23,7 @@ export class LiquidTheme {
         { token: "string.liquid", foreground: "#C7856F" },
         { token: "comment.liquid", foreground: "#608D4F" },
         { token: "operator.liquid", foreground: "#B2121B" },
-        { token: "variable.liquid", foreground: "#4C90C9" },
+        { token: "variable.liquid", foreground: "#C3C3C3" },
       ],
     });
   }

@@ -8,7 +8,7 @@ export const liquidTokenizer: monaco.languages.IMonarchLanguage = {
       [/\{\{/, { token: "delimiter.liquid", next: "@outputState" }],
       [/\{%/, { token: "delimiter.liquid", next: "@tagState" }],
       [/<script\b[^>]*>/, { token: "tag.html", next: "@scriptState", nextEmbedded: "text/javascript" }],
-      [/<\/?[a-zA-Z0-9]+\b[^>]*>/, "tag.html"],
+      [/<([a-zA-Z0-9]+)\b[^>]*>/, { token: "tag.html", next: "@htmlState", nextEmbedded: "text/html" }],
       [/[^<{}%]+/, ""],
     ],
     commentState: [
@@ -16,6 +16,10 @@ export const liquidTokenizer: monaco.languages.IMonarchLanguage = {
       [/\{%\s*endcomment\s*%\}/, { token: "comment.liquid", next: "@pop" }],
       [/[^{%]+/, "comment.liquid"], // skip single text and capture block text for performance
       [/./, "comment.liquid"],
+    ],
+    htmlState: [
+      [/<\/([a-zA-Z0-9]+)\s*>/, { token: "tag.html", next: "@pop", nextEmbedded: "@pop" }],
+      [/./, ""], // Embedded HTML Engine handles everything inside the tags
     ],
     scriptState: [
       [/<\/script\s*>/, { token: "tag.html", next: "@pop", nextEmbedded: "@pop" }],

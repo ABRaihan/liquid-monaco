@@ -12,9 +12,6 @@ export const liquidConfiguration: monaco.languages.LanguageConfiguration = {
     ["(", ")"],
   ],
   autoClosingPairs: [
-    { open: "{", close: "}" },
-    { open: "{{", close: "}}" },
-    { open: "{%", close: "%}" },
     { open: "[", close: "]" },
     { open: "(", close: ")" },
     { open: "'", close: "'" },

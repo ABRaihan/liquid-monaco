@@ -1,4 +1,5 @@
 import * as monaco from "monaco-editor";
+import { registerLiquidAutoClosingDelimiters } from "./liquid.auto-closing-delimiters";
 import { LiquidCompletion } from "./completion";
 import { LIQUID_LANGUAGE_ID } from "./constants";
 import { liquidConfiguration } from "./liquid.config";
@@ -26,5 +27,6 @@ export class LiquidLanguage {
       new LiquidCompletion(this.monaco).completion,
     );
     this.monaco.languages.setLanguageConfiguration(LIQUID_LANGUAGE_ID, liquidConfiguration);
+    registerLiquidAutoClosingDelimiters(this.monaco);
   }
 }

@@ -3,15 +3,22 @@ import { LIQUID_LANGUAGE_ID } from "./constants";
 
 type Monaco = typeof monaco;
 
+type LiquidOpeningDelimiter = "{{" | "{%";
+type LiquidClosingDelimiter = "}}" | "%}";
+
 type LiquidDelimiterPair = {
-  open: "{{" | "{%";
-  close: "}}" | "%}";
+  open: LiquidOpeningDelimiter;
+  close: LiquidClosingDelimiter;
 };
 
-const LIQUID_AUTO_CLOSING_DELIMITERS: LiquidDelimiterPair[] = [
-  { open: "{{", close: "}}" },
-  { open: "{%", close: "%}" },
-];
+type LiquidDelimiterTransform = {
+  range: monaco.IRange;
+  text: string;
+  cursorColumn: number;
+};
+
+const OUTPUT_DELIMITER: LiquidDelimiterPair = { open: "{{", close: "}}" };
+const TAG_DELIMITER: LiquidDelimiterPair = { open: "{%", close: "%}" };
 
 const registeredMonacoInstances = new WeakSet<Monaco>();
 
@@ -30,10 +37,7 @@ class LiquidAutoClosingDelimiterContribution {
   private readonly monacoInstance: Monaco;
   private isApplyingEdit = false;
 
-  constructor(
-    monacoInstance: Monaco,
-    editor: monaco.editor.ICodeEditor,
-  ) {
+  constructor(monacoInstance: Monaco, editor: monaco.editor.ICodeEditor) {
     this.monacoInstance = monacoInstance;
     this.editor = editor;
 
@@ -43,8 +47,7 @@ class LiquidAutoClosingDelimiterContribution {
   }
 
   private handleModelContentChange(event: monaco.editor.IModelContentChangedEvent): void {
-    const typedText = this.getSingleTypedDelimiterCharacter(event);
-    if (this.isApplyingEdit || !typedText) return;
+    if (this.isApplyingEdit || !this.isLiquidDelimiterTypingEvent(event)) return;
 
     const model = this.editor.getModel();
     if (!model || model.getLanguageId() !== LIQUID_LANGUAGE_ID) return;
@@ -52,28 +55,23 @@ class LiquidAutoClosingDelimiterContribution {
     const selections = this.editor.getSelections();
     if (!selections?.length || selections.some((selection) => !selection.isEmpty())) return;
 
-    const delimiterPair = this.getTypedDelimiterPair(model, selections[0].getPosition(), typedText);
-    if (!delimiterPair) return;
-
     const edits: monaco.editor.IIdentifiedSingleEditOperation[] = [];
     const nextSelections: monaco.Selection[] = [];
 
     for (const selection of selections) {
-      const position = selection.getPosition();
-      const pairAtCursor = this.getTypedDelimiterPair(model, position, typedText);
-      if (!pairAtCursor || pairAtCursor.open !== delimiterPair.open) return;
-      if (this.hasExistingClosingDelimiter(model, position, pairAtCursor.close)) return;
+      const transform = this.getDelimiterTransform(model, selection.getPosition());
+      if (!transform) return;
 
       edits.push({
-        range: new this.monacoInstance.Range(position.lineNumber, position.column, position.lineNumber, position.column),
-        text: `  ${pairAtCursor.close}`,
+        range: transform.range,
+        text: transform.text,
       });
       nextSelections.push(
         new this.monacoInstance.Selection(
-          position.lineNumber,
-          position.column + 1,
-          position.lineNumber,
-          position.column + 1,
+          transform.range.startLineNumber,
+          transform.cursorColumn,
+          transform.range.startLineNumber,
+          transform.cursorColumn,
         ),
       );
     }
@@ -83,44 +81,87 @@ class LiquidAutoClosingDelimiterContribution {
     this.isApplyingEdit = false;
   }
 
-  private getSingleTypedDelimiterCharacter(event: monaco.editor.IModelContentChangedEvent): "{" | "%" | undefined {
-    if (event.isFlush || event.changes.length === 0) return undefined;
+  private isLiquidDelimiterTypingEvent(event: monaco.editor.IModelContentChangedEvent): boolean {
+    if (event.isFlush || event.changes.length === 0) return false;
 
     const typedText = event.changes[0].text;
-    if (typedText !== "{" && typedText !== "%") return undefined;
+    if (typedText !== "{}" && typedText !== "{" && typedText !== "%") return false;
 
-    const isSimpleTyping = event.changes.every((change) => change.text === typedText && change.rangeLength === 0);
-
-    return isSimpleTyping ? typedText : undefined;
+    return event.changes.every((change) => change.text === typedText && change.rangeLength === 0);
   }
 
-  private getTypedDelimiterPair(
+  private getDelimiterTransform(
     model: monaco.editor.ITextModel,
     position: monaco.Position,
-    typedText: string,
-  ): LiquidDelimiterPair | undefined {
-    const candidates = LIQUID_AUTO_CLOSING_DELIMITERS.filter((pair) => pair.open.endsWith(typedText));
+  ): LiquidDelimiterTransform | undefined {
+    if (this.hasOpeningDelimiterBeforeCursor(model, position, OUTPUT_DELIMITER.open)) {
+      return this.getOutputDelimiterTransform(model, position);
+    }
 
-    return candidates.find((pair) => {
-      const startColumn = position.column - pair.open.length;
-      if (startColumn < 1) return false;
+    if (this.hasOpeningDelimiterBeforeCursor(model, position, TAG_DELIMITER.open)) {
+      return this.getTagDelimiterTransform(model, position);
+    }
 
-      return (
-        model.getValueInRange({
-          startLineNumber: position.lineNumber,
-          startColumn,
-          endLineNumber: position.lineNumber,
-          endColumn: position.column,
-        }) === pair.open
-      );
-    });
+    return undefined;
   }
 
-  private hasExistingClosingDelimiter(
+  private getOutputDelimiterTransform(
     model: monaco.editor.ITextModel,
     position: monaco.Position,
-    closingDelimiter: string,
+  ): LiquidDelimiterTransform | undefined {
+    const closingLength = this.getClosingLengthAfterCursor(model, position, OUTPUT_DELIMITER.close);
+    if (!closingLength) return undefined;
+
+    const startColumn = position.column - OUTPUT_DELIMITER.open.length;
+    const endColumn = position.column + closingLength;
+
+    return {
+      range: new this.monacoInstance.Range(position.lineNumber, startColumn, position.lineNumber, endColumn),
+      text: "{{  }}",
+      cursorColumn: startColumn + 3,
+    };
+  }
+
+  private getTagDelimiterTransform(
+    model: monaco.editor.ITextModel,
+    position: monaco.Position,
+  ): LiquidDelimiterTransform | undefined {
+    const closingLength = this.getClosingLengthAfterCursor(model, position, "}");
+    if (!closingLength) return undefined;
+
+    const startColumn = position.column - TAG_DELIMITER.open.length;
+    const endColumn = position.column + closingLength;
+
+    return {
+      range: new this.monacoInstance.Range(position.lineNumber, startColumn, position.lineNumber, endColumn),
+      text: "{%  %}",
+      cursorColumn: startColumn + 3,
+    };
+  }
+
+  private hasOpeningDelimiterBeforeCursor(
+    model: monaco.editor.ITextModel,
+    position: monaco.Position,
+    openingDelimiter: LiquidOpeningDelimiter,
   ): boolean {
+    const startColumn = position.column - openingDelimiter.length;
+    if (startColumn < 1) return false;
+
+    return (
+      model.getValueInRange({
+        startLineNumber: position.lineNumber,
+        startColumn,
+        endLineNumber: position.lineNumber,
+        endColumn: position.column,
+      }) === openingDelimiter
+    );
+  }
+
+  private getClosingLengthAfterCursor(
+    model: monaco.editor.ITextModel,
+    position: monaco.Position,
+    preferredClosingDelimiter: LiquidClosingDelimiter | "}",
+  ): number | undefined {
     const lineRest = model.getValueInRange({
       startLineNumber: position.lineNumber,
       startColumn: position.column,
@@ -128,6 +169,9 @@ class LiquidAutoClosingDelimiterContribution {
       endColumn: model.getLineMaxColumn(position.lineNumber),
     });
 
-    return lineRest.startsWith(closingDelimiter) || lineRest.startsWith(` ${closingDelimiter}`);
+    if (lineRest.startsWith(preferredClosingDelimiter)) return preferredClosingDelimiter.length;
+    if (lineRest.startsWith("}")) return 1;
+
+    return undefined;
   }
 }
